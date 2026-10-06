@@ -2,12 +2,14 @@ name: image of the day
 
 on:
   schedule:
-    - cron: "0 22 * * *"
-    - cron: "0 23 * * *"
+    - cron: "7 22 * * *"
+    - cron: "7 23 * * *"
+    - cron: "7 5 * * *"
+    - cron: "7 11 * * *"
   workflow_dispatch:
     inputs:
       dates:
-        description: "Giorni da generare (YYYY-MM-DD separati da virgola). Vuoto = ieri"
+        description: "Giorni da generare (YYYY-MM-DD separati da virgola). Vuoto = recupera i giorni mancanti"
         required: false
   push:
     branches: [main]
@@ -39,8 +41,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           python generate.py ${{ github.event.inputs.dates }}
-        env:
-          SCHEDULED: ${{ github.event_name == 'schedule' && '1' || '' }}
 
       - name: Salva
         if: github.event_name != 'push'
