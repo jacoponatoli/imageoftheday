@@ -22,5 +22,53 @@
   "h": 291,
   "paper": "italia oggi",
   "pages": 1
+ },
+ {
+  "date": "2026-09-30",
+  "src": "images/2026-09-30.jpg",
+  "w": 338,
+  "h": 322,
+  "paper": "la notizia",
+  "pages": 1
+ },
+ {
+  "date": "2026-10-01",
+  "src": "images/2026-10-01.jpg",
+  "w": 161,
+  "h": 164,
+  "paper": "il secolo xix",
+  "pages": 2
+ },
+ {
+  "date": "2026-10-02",
+  "src": "images/2026-10-02.jpg",
+  "w": 431,
+  "h": 303,
+  "paper": "milano finanza",
+  "pages": 1
+ },
+ {
+  "date": "2026-10-03",
+  "src": "images/2026-10-03.jpg",
+  "w": 209,
+  "h": 227,
+  "paper": "il-piccolo-001632mjqcj7p",
+  "pages": 2
+ },
+ {
+  "date": "2026-10-04",
+  "src": "images/2026-10-04.jpg",
+  "w": 230,
+  "h": 203,
+  "paper": "50",
+  "pages": 3
+ },
+ {
+  "date": "2026-10-05",
+  "src": "images/2026-10-05.jpg",
+  "w": 162,
+  "h": 349,
+  "paper": "il tirreno",
+  "pages": 1
  }
 ]
