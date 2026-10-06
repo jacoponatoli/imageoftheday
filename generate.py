@@ -7,7 +7,7 @@ trova le fotografie stampate su ogni pagina e sceglie la foto del giorno con una
 La ritaglia dalla pagina e la aggiunge a days.json.
 
 Uso:
-  python generate.py                                   # il giorno appena finito (ora di Roma)
+  python generate.py                                   # ieri, più i giorni mancanti dell'ultima settimana
   python generate.py 2026-09-27,2026-09-28,2026-09-29  # giorni specifici (prova / recupero)
   python generate.py 2026-09-28:2                      # rifà quel giorno con la seconda scelta
 """
@@ -33,6 +33,7 @@ UA = {"User-Agent": "Mozilla/5.0 (compatible; image-of-the-day)"}
 CDN = "https://static-prod.cdnilpost.com/wp-content/uploads/"
 SKIP_PAPERS = ("sport",)          # i quotidiani sportivi vincerebbero sempre per dimensione
 MIN_AREA = 0.04                   # la foto deve occupare almeno il 4% della pagina
+CATCH_UP = 7                      # giorni all'indietro recuperati se un'esecuzione è saltata
 
 
 # ---------- download ----------
@@ -139,18 +140,16 @@ def photo_regions(img):
             continue
         if (labels[sl] == i).mean() < 0.85:                          # deve essere un rettangolo pieno
             continue
-        if ys.start / h > 0.72 or ys.stop / h < 0.2:                   # fascia pubblicitaria in basso / accanto alla testata
-            continue
         gray = small[sl].mean(axis=2)
         if entropy(gray) < 2.5:                                        # scritte e fasce di colore: pochi toni
             continue
-        if flat_share(gray) > 0.3:                                     # fondi piatti = grafica/pubblicità, non foto
-            continue
+        strict = (ys.start / h <= 0.72 and ys.stop / h >= 0.2         # non nella fascia pubblicitaria
+                  and flat_share(gray) <= 0.4)                        # fondi piatti = grafica/pubblicità
         # rientra dell'1.5% per non prendere cornici e filetti
         dx, dy = int(bw * 0.015), int(bh * 0.015)
         box = (int((xs.start + dx) * scale), int((ys.start + dy) * scale),
                int((xs.stop - dx) * scale), int((ys.stop - dy) * scale))
-        out.append((box, area))
+        out.append((box, area, strict))
     return out
 
 
@@ -176,10 +175,12 @@ def process(day, rank=1):
         if img is None:
             continue
         n_pages += 1
-        for box, area in photo_regions(img):
+        for box, area, strict in photo_regions(img):
             crop = img.crop(box)
-            cands.append((paper, crop, area, dhash(crop)))
-    print(f"{day}: {n_pages} prime pagine, {len(cands)} foto trovate")
+            cands.append((paper, crop, area, dhash(crop), strict))
+    good = [c for c in cands if c[4]]
+    print(f"{day}: {n_pages} prime pagine, {len(good)} foto sicure, {len(cands) - len(good)} incerte")
+    cands = good or cands          # se i filtri scartano tutto, meglio una foto incerta che nessuna
     if not cands:
         return None
 
@@ -196,7 +197,7 @@ def process(day, rank=1):
         if all(np.count_nonzero(cands[i][3] != cands[j][3]) > 30 for _, j in picked):
             picked.append((rep, i))
     rep, best = picked[min(rank, len(picked)) - 1]
-    paper, crop, area, _ = cands[best]
+    paper, crop, area = cands[best][:3]
     print(f"{day}: scelta da {paper} (su {rep + 1} prime pagine, {area:.0%} della pagina)")
 
     os.makedirs(IMAGES, exist_ok=True)
@@ -208,9 +209,6 @@ def process(day, rank=1):
 
 def main():
     now = dt.datetime.now(ROME)
-    if os.environ.get("SCHEDULED") and now.hour > 1:
-        print("non è mezzanotte a Roma: salto")
-        return
 
     # "2026-09-28" = genera se manca; "2026-09-28:1" = rigenera; "2026-09-28:2" = seconda scelta, ecc.
     arg = ",".join(sys.argv[1:]).strip()
@@ -221,8 +219,9 @@ def main():
             continue
         date_s, _, rank_s = item.partition(":")
         jobs.append((dt.date.fromisoformat(date_s), int(rank_s) if rank_s else None))
-    if not jobs:
-        jobs = [(now.date() - dt.timedelta(days=1), None)]
+    if not jobs:  # esecuzione automatica: tutti i giorni mancanti dell'ultima settimana, fino a ieri
+        yesterday = now.date() - dt.timedelta(days=1)
+        jobs = [(yesterday - dt.timedelta(days=k), None) for k in range(CATCH_UP - 1, -1, -1)]
 
     entries = []
     if os.path.exists(DATA):
