@@ -160,16 +160,48 @@ def dhash(img, size=12):
 
 # ---------- scelta ----------
 
+GIORNALONE = "https://www.giornalone.it/"
+
+
+def giornalone_pages(day):
+    """Riserva per i giorni in cui il Post non pubblica la rassegna: i quotidiani nazionali di giornalone.it.
+    Restituisce (testata, url immagine) solo per le edizioni di quel giorno (la data è nel percorso dell'immagine)."""
+    r = get(GIORNALONE + "quotidiani-italiani/")
+    if r is None:
+        return []
+    slugs = []
+    for slug in re.findall(r"giornalone\.it/prima-pagina-([a-z0-9-]+)/", r.text):
+        if slug not in slugs:
+            slugs.append(slug)
+    ymd = day.strftime("%Y/%m/%d")
+    out = []
+    for slug in slugs[:40]:
+        page = get(f"{GIORNALONE}prima-pagina-{slug}/?d={day.isoformat()}")
+        time.sleep(0.5)
+        if page is None:
+            continue
+        m = re.search(r"(?:https://www\.giornalone\.it)?/g/%s/%s-[\w-]+\.(?:webp|jpe?g|png)" % (ymd, re.escape(slug)), page.text)
+        if m:
+            url = m.group(0)
+            out.append((slug.replace("-", " "), url if url.startswith("http") else "https://www.giornalone.it" + url))
+    return out
+
+
 def process(day, rank=1):
     page = find_page(day)
-    if not page:
-        print(f"{day}: rassegna del Post non trovata")
+    if page:
+        sources = front_pages(page, day)
+    else:
+        print(f"{day}: il Post non ha pubblicato la rassegna, provo giornalone")
+        sources = giornalone_pages(day)
+    if not sources:
+        print(f"{day}: nessuna prima pagina disponibile")
         return None
 
-    cands = []  # (paper, crop, area, hash)
+    cands = []  # (paper, crop, area, hash, strict)
     n_pages = 0
-    for paper, url in front_pages(page, day):
-        if any(s in paper for s in SKIP_PAPERS):
+    for paper, url in sources:
+        if any(k in paper for k in SKIP_PAPERS):
             continue
         img = load_image(url)
         if img is None:
