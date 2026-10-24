@@ -68,9 +68,11 @@ def find_page(day):
 
 
 def paper_name(filename):
-    s = re.sub(r"^\d+-", "", filename.rsplit(".", 1)[0])
-    s = re.sub(r"^\d+_", "", s)
-    return s.replace("_", " ").strip()
+    s = filename.rsplit(".", 1)[0]
+    s = re.sub(r"^\d+[-_]", "", s)              # timestamp del caricamento
+    s = re.sub(r"^\d+[-_]", "", s)              # numero d'ordine (1_, 001-)
+    s = re.sub(r"[-_]\d{6}[a-z0-9]{6,}$", "", s)  # codice finale casuale
+    return s.replace("_", " ").replace("-", " ").strip()
 
 
 def front_pages(page_url, day):
@@ -78,7 +80,7 @@ def front_pages(page_url, day):
     if r is None:
         return []
     base = CDN + day.strftime("%Y/%m/%d") + "/"
-    names = re.findall(re.escape(base) + r"(?:\d+x\d+/)?([\w.-]+\.(?:jpe?g|png))", r.text)
+    names = re.findall(re.escape(base) + r"(?:\d+x\d+/)?([\w.-]+\.(?:jpe?g|png|webp))", r.text)
     seen, out = set(), []
     for n in names:
         if n in seen or "apertura" in n:
@@ -191,6 +193,9 @@ def process(day, rank=1):
     page = find_page(day)
     if page:
         sources = front_pages(page, day)
+        if not sources:
+            print(f"{day}: rassegna del Post trovata ma senza immagini leggibili, provo giornalone")
+            sources = giornalone_pages(day)
     else:
         print(f"{day}: il Post non ha pubblicato la rassegna, provo giornalone")
         sources = giornalone_pages(day)
