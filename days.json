@@ -174,5 +174,37 @@
   "h": 151,
   "paper": "libero",
   "pages": 2
+ },
+ {
+  "date": "2026-10-20",
+  "src": "images/2026-10-20.jpg",
+  "w": 387,
+  "h": 608,
+  "paper": "ledicola nazionale",
+  "pages": 1
+ },
+ {
+  "date": "2026-10-21",
+  "src": "images/2026-10-21.jpg",
+  "w": 810,
+  "h": 651,
+  "paper": "losservatore romano",
+  "pages": 1
+ },
+ {
+  "date": "2026-10-22",
+  "src": "images/2026-10-22.jpg",
+  "w": 903,
+  "h": 864,
+  "paper": "la notizia",
+  "pages": 1
+ },
+ {
+  "date": "2026-10-23",
+  "src": "images/2026-10-23.jpg",
+  "w": 924,
+  "h": 867,
+  "paper": "la notizia",
+  "pages": 1
  }
 ]
