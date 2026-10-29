@@ -238,5 +238,13 @@
   "h": 366,
   "paper": "la stampa",
   "pages": 1
+ },
+ {
+  "date": "2026-10-28",
+  "src": "images/2026-10-28.jpg",
+  "w": 581,
+  "h": 550,
+  "paper": "la notizia",
+  "pages": 1
  }
 ]
